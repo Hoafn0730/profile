@@ -5,7 +5,7 @@ const Account = require('./models/account');
 const routes = require('./routes');
 
 const app = express();
-// const port = 3000;
+const port = 3000;
 
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
@@ -30,5 +30,5 @@ routes(app);
 // });
 
 app.listen(process.env.PORT, () => {
-    console.log(`Example app listening on port: http://localhost:${port}`);
+    console.log(`Example app listening on port: http://localhost:${process.env.PORT}`);
 });
