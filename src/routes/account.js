@@ -3,17 +3,39 @@ const express = require('express');
 const Account = require('../models/account');
 
 const router = express.Router();
+const PAGE_SIZE = 2;
 
 // [GET]
-router.get('/', (req, res, next) => {
-    Account.find({})
-        .then((data) => res.json(data))
-        .catch((e) => res.status(500).json('loi server'));
+router.get('/', async (req, res) => {
+    let page = req.query.page;
+    try {
+        if (page) {
+            page = Number(page) < 1 ? 1 : Number(page);
+            const skip = (page - 1) * PAGE_SIZE;
+            const data = await Account.find({}).skip(skip).limit(PAGE_SIZE);
+            if (data) {
+                res.json(data);
+            } else {
+                res.json('not data');
+            }
+        } else {
+            // get all
+            const data = await Account.find({});
+            if (data) {
+                res.json(data);
+            } else {
+                res.json('not data');
+            }
+        }
+    } catch (e) {
+        res.status(500).json('loi server');
+    }
 });
 
 // [GET]
 router.get('/:id', (req, res, next) => {
     const id = req.params.id;
+
     Account.findOne({ _id: id })
         .then((data) => res.json(data))
         .catch((e) => res.status(500).json('loi server'));

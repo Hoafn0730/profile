@@ -1,37 +1,42 @@
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const redis = require('redis');
+const connectRedis = require('connect-redis');
 
-const Account = require('./models/account');
 const routes = require('./routes');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+const RedisStore = connectRedis.default;
+const redisClient = redis.createClient({
+    host: 'localhost',
+    port: 6379,
+});
+redisClient.connect().catch(console.error);
 
+app.use(cookieParser());
 app.use('/static', express.static(path.join(__dirname, 'public')));
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+// Store data in redis
+app.use(
+    session({
+        store: new RedisStore({ client: redisClient }),
+        secret: 'secret$%^134',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            secure: false, // if true only transmit cookie over https
+            httpOnly: false, // if true prevent client side JS from reading the cookie
+            maxAge: 1000 * 60 * 10, // session max age in miliseconds
+        },
+    }),
+);
 
 routes(app);
 
-app.use('/', (req, res) => {
-    res.json({ message: 'Hello world!' });
-});
-// app.post('/login', (req, res) => {
-//     const username = req.body.username;
-//     const password = req.body.password;
-//
-//     Account.findOne({ username, password })
-//         .then((data) => {
-//             if (data) {
-//                 res.json('thanh cong');
-//             } else {
-//                 res.status(400).json('that bai');
-//             }
-//         })
-//         .catch((e) => res.status(500).json('loi'));
-// });
-
-app.listen(process.env.PORT, () => {
-    console.log(`Example app listening on port: http://localhost:${process.env.PORT}`);
+app.listen(port, () => {
+    console.log(`Example app listening on port: http://localhost:${port}`);
 });
